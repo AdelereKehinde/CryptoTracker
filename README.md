@@ -9,7 +9,7 @@ This app allows users to view live market data, track coin performance, check pr
 
 | Home Screen | Coin Details | Search | Portfolio | Analytics |
 |--------------|---------------|----------|-------------|-------------|
-| ![Home](screenshots/screenshot1.png) | ![Coin Details](screenshots/screenshot2.png) | ![Search](sceenshots/screenshot3.png) | ![Authentication](screenshots/screenshot4.png) | ![Analytics](screenshots/screenshot5.png) |
+| ![Home](screenshots/screenshot1.png) | ![Coin Details](screenshots/screenshot2.png) | ![Search](screenshots/sceenshot3.png) | ![Authentication](screenshots/screenshot4.png) | ![Analytics](screenshots/screenshot5.png) |
 
 > 📸 *(Add your actual screenshots inside a `/screenshots` folder in the root of your project.)*
 
