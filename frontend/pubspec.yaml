@@ -1,0 +1,30 @@
+name: cheese_ball
+description: "Cheese_Ball: Advanced real-world crypto tracker app with FastAPI backend and Flutter frontend."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.4.0
+  cupertino_icons: ^1.0.8
+  dio: ^5.4.0
+  fluttertoast: ^8.2.4
+  web_socket_channel: ^2.4.0
+  socket_io_client: ^2.0.3
+  connectivity_plus: ^5.0.1
+  cached_network_image: ^3.3.0
+  intl: ^0.18.0
+  url_launcher: ^6.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
