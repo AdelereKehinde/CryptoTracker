@@ -209,7 +209,7 @@ async def websocket_market(websocket: WebSocket):
     await manager.connect(websocket)
     try:
         while True:
-            await asyncio.sleep(5)
+            await asyncio.sleep(60)
             trending = await proxy_get("/search/trending")
             global_data = await proxy_get("/global")
             await manager.broadcast({"type": "trending", "data": trending})
@@ -223,7 +223,7 @@ async def websocket_chart(websocket: WebSocket, coin_id: str):
     await manager.connect(websocket)
     try:
         while True:
-            await asyncio.sleep(10)
+            await asyncio.sleep(120)
             # Send latest market chart (1d, 1h, 7d)
             chart_1d = await proxy_get(f"/coins/{coin_id}/market_chart", params={"vs_currency": "usd", "days": "1"})
             chart_7d = await proxy_get(f"/coins/{coin_id}/market_chart", params={"vs_currency": "usd", "days": "7"})
