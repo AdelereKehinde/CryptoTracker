@@ -3,6 +3,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import '../services/api_service.dart';
 
 class AddHoldingScreen extends StatefulWidget {
+  const AddHoldingScreen({super.key});
+
   @override
   State<AddHoldingScreen> createState() => _AddHoldingScreenState();
 }
@@ -90,9 +92,9 @@ class _AddHoldingScreenState extends State<AddHoldingScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
+                            onPressed: _submit,
                             child: const Text("Add Holding",
                                 style: TextStyle(color: Colors.white)),
-                            onPressed: _submit,
                           ),
                   ],
                 ),

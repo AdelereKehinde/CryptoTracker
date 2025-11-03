@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
 class HomeDashboardScreen extends StatefulWidget {
+  const HomeDashboardScreen({super.key});
+
   @override
   State<HomeDashboardScreen> createState() => _HomeDashboardScreenState();
 }
@@ -13,7 +15,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   Future<void> fetchMarkets() async {
     setState(() => loading = true);
     try {
-      final response = await Dio().get('http://localhost:8000/coins/markets');
+      final response = await Dio().get('https://cryptotracker-yof6.onrender.com/coins/markets');
       coins = response.data;
     } catch (e) {
       coins = [];
@@ -81,9 +83,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.orange,
-        child: Icon(Icons.pie_chart, color: Colors.white),
         onPressed: () => Navigator.pushNamed(context, '/portfolio'),
         tooltip: "Go to Portfolio",
+        child: Icon(Icons.pie_chart, color: Colors.white),
       ),
     );
   }

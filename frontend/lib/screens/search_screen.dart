@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
 class SearchScreen extends StatefulWidget {
+  const SearchScreen({super.key});
+
   @override
   State<SearchScreen> createState() => _SearchScreenState();
 }
@@ -15,7 +17,7 @@ class _SearchScreenState extends State<SearchScreen> {
   Future<void> searchCoins(String query) async {
     setState(() => loading = true);
     try {
-      final response = await Dio().get('http://localhost:8000/coins/list');
+      final response = await Dio().get('https://cryptotracker-yof6.onrender.com/coins/list');
       results = (response.data as List)
           .where((coin) => coin['name'].toLowerCase().contains(query.toLowerCase()) || coin['symbol'].toLowerCase().contains(query.toLowerCase()))
           .toList();

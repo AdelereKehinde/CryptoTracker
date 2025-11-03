@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 class AddToWatchlistModal extends StatefulWidget {
+  const AddToWatchlistModal({super.key});
+
   @override
   State<AddToWatchlistModal> createState() => _AddToWatchlistModalState();
 }
@@ -16,7 +18,7 @@ class _AddToWatchlistModalState extends State<AddToWatchlistModal> {
   Future<void> _addToWatchlist(String coinId) async {
     setState(() => _loading = true);
     try {
-      final response = await Dio().post('http://localhost:8000/watchlist/add', data: {'coin_id': coinId});
+      final response = await Dio().post('https://cryptotracker-yof6.onrender.com/watchlist/add', data: {'coin_id': coinId});
       if (response.statusCode == 200) {
         Fluttertoast.showToast(msg: "Added to watchlist!", backgroundColor: Colors.blue);
         Navigator.pop(context, true);

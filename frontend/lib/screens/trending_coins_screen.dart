@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
 class TrendingCoinsScreen extends StatefulWidget {
+  const TrendingCoinsScreen({super.key});
+
   @override
   State<TrendingCoinsScreen> createState() => _TrendingCoinsScreenState();
 }
@@ -13,7 +15,7 @@ class _TrendingCoinsScreenState extends State<TrendingCoinsScreen> {
   Future<void> fetchTrending() async {
     setState(() => loading = true);
     try {
-      final response = await Dio().get('http://localhost:8000/search/trending');
+      final response = await Dio().get('https://cryptotracker-yof6.onrender.com/search/trending');
       trending = response.data['coins'] ?? [];
     } catch (e) {
       trending = [];

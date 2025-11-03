@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 
 class ApiService {
   static final Dio _dio = Dio(BaseOptions(
-    baseUrl: 'http://localhost:8000', // Change this to your backend URL if needed
+    baseUrl: 'https://cryptotracker-yof6.onrender.com/', // Change this to your backend URL if needed
     connectTimeout: const Duration(seconds: 10),
     receiveTimeout: const Duration(seconds: 10),
     headers: {'Content-Type': 'application/json'},

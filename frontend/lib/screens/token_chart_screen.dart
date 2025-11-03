@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
 class TokenChartScreen extends StatefulWidget {
+  const TokenChartScreen({super.key});
+
   @override
   State<TokenChartScreen> createState() => _TokenChartScreenState();
 }
@@ -14,7 +16,7 @@ class _TokenChartScreenState extends State<TokenChartScreen> {
   Future<void> fetchChart(String id) async {
     setState(() => loading = true);
     try {
-      final response = await Dio().get('http://localhost:8000/coins/$id/market_chart', queryParameters: {
+      final response = await Dio().get('https://cryptotracker-yof6.onrender.com/$id/market_chart', queryParameters: {
         'vs_currency': 'usd',
         'days': '7',
       });

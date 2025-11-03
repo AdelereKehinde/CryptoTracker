@@ -13,8 +13,17 @@ from jose import jwt
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 import asyncio
-from schemas import Holding, UserCreate, UserLogin
+from schemas import Holding, UserCreate, UserLogin, UserResponse
+from typing import Any, Dict, Optional
+import os
+from dotenv import load_dotenv
+from functools import lru_cache
+import time
 
+COINS_CACHE = {"data": None, "timestamp": 0}
+CACHE_TTL = 3600  # 1 hour
+
+load_dotenv()
 
 
 COINGECKO_BASE = "https://api.coingecko.com/api/v3"
@@ -57,22 +66,24 @@ from fastapi.responses import JSONResponse
 
 @app.post("/signup")
 def signup(user: UserCreate, db: Session = Depends(get_db)):
-    if db.query(User).filter((User.username == user.username) | (User.email == user.email)).first():
-        raise HTTPException(status_code=400, detail="User already exists")
-    
+    if db.query(User).filter(
+        (User.username == user.username) |
+        (User.email == user.email) |
+        (User.phone == user.phone)
+    ).first():
+        raise HTTPException(status_code=400, detail="User with username/email/phone already exists")
+
     new_user = User(
         username=user.username,
         email=user.email,
+        phone=user.phone,
+        country=user.country,
         hashed_password=get_password_hash(user.password)
     )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-
-    return JSONResponse(
-        status_code=200,
-        content={"username": new_user.username, "email": new_user.email, "message": "Signup successful"}
-    )
+    return {"message": "Signup successful", "user": new_user.username}
 
 @app.post("/token")
 def login(user: UserLogin, db: Session = Depends(get_db)):
@@ -80,27 +91,35 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     if not db_user or not verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=401, detail="Incorrect username or password")
     token = create_access_token({"sub": db_user.username})
-    session = SessionLog(user_id=db_user.id)
-    db.add(session)
-    db.commit()
     return {"access_token": token, "token_type": "bearer"}
 
-# --- CoinGecko Proxy Endpoints ---
-async def proxy_get(path, params=None):
+async def proxy_get(path: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            r = await client.get(f"{COINGECKO_BASE}{path}", params=params)
-            r.raise_for_status()
-            return r.json()
-    except httpx.HTTPStatusError as e:
-        return {"error": f"HTTP {e.response.status_code}", "detail": e.response.text}
-    except Exception as e:
-        return {"error": str(e)}
-
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.get(f"{COINGECKO_BASE}{path}", params=params)
+            response.raise_for_status()
+            try:
+                return response.json()
+            except Exception:
+                # Handle cases where response is text, not JSON
+                return {"error": "Invalid response format", "raw": response.text}
+    except httpx.RequestError:
+        return {"error": "Network issue"}
 
 @app.get("/coins/list")
 async def coins_list():
-    return await proxy_get("/coins/list")
+    now = time.time()
+    if COINS_CACHE["data"] and now - COINS_CACHE["timestamp"] < CACHE_TTL:
+        return COINS_CACHE["data"]
+
+    try:
+        data = await proxy_get("/coins/list")
+        COINS_CACHE["data"] = data
+        COINS_CACHE["timestamp"] = now
+        return data
+    except:
+        return {"error": "Failed to fetch coins list"}
+    
 
 @app.get("/simple/supported_vs_currencies")
 async def supported_vs_currencies():
@@ -142,22 +161,37 @@ async def coin_tickers(id: str):
 async def coin_market_chart(id: str, vs_currency: str, days: str):
     return await proxy_get(f"/coins/{id}/market_chart", params={"vs_currency": vs_currency, "days": days})
 
-@app.get("/profile")
-def get_profile(username: str | None = Query(None, description="username (optional)"), db: Session = Depends(get_db)):
-    if username:
-        user = db.query(User).filter(User.username == username).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        return {
-            "username": user.username,
-            "email": user.email,
-            "is_admin": bool(user.is_admin),
-            "created_at": user.created_at.isoformat() if getattr(user, "created_at", None) else None
-        }
+from fastapi.security import OAuth2PasswordBearer
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")  # Make sure this is there
 
-    users = db.query(User).all()
-    return {"users": [{"username": u.username, "email": u.email} for u in users]}
+# Add this helper function (before @app.get("/profile"))
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    try:
+        # Decode token to get username
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except jwt.JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    user = db.query(User).filter(User.username == username).first()
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
 
+# Replace the old /profile endpoint
+@app.get("/profile", response_model=dict)
+def get_current_user_profile(current_user: User = Depends(get_current_user)):
+    """Get profile of CURRENTLY LOGGED IN user only"""
+    return {
+        "username": current_user.username,
+        "email": current_user.email,
+        "phone": current_user.phone or "Not set",
+        "country": current_user.country or "Not set",
+        "joined": current_user.created_at.strftime("%B %d, %Y") if current_user.created_at else "Unknown",
+        "member_since": f"{current_user.created_at.strftime('%Y-%m-%d %H:%M')} UTC" if current_user.created_at else "Unknown"
+    }
 
 
 @app.get("/coins/{id}/market_chart/range")
@@ -285,9 +319,8 @@ def get_portfolio():
     return {"portfolio": portfolio}
 
 
-# ...existing code...
-from datetime import datetime  # { changed code }
-# ...existing code...
+
+from datetime import datetime 
 
 @app.get("/watchlist")
 async def get_watchlist():
@@ -447,3 +480,11 @@ async def get_analytics():
 
 
 
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "main:app",
+        host="127.0.0.1",
+        port=8000,
+        reload=True
+    )

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 import 'package:dio/dio.dart';
 class BlockchainExplorerScreen extends StatefulWidget {
+  const BlockchainExplorerScreen({super.key});
+
   @override
   State<BlockchainExplorerScreen> createState() => _BlockchainExplorerScreenState();
 }
@@ -14,7 +16,7 @@ class _BlockchainExplorerScreenState extends State<BlockchainExplorerScreen> {
   Future<void> fetchChains() async {
     setState(() => loading = true);
     try {
-      final response = await Dio().get('http://localhost:8000/blockchains');
+      final response = await Dio().get('https://cryptotracker-yof6.onrender.com/blockchains');
       chains = response.data['chains'] ?? [];
     } catch (e) {
       chains = [];

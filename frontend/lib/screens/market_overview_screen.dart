@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
 class MarketOverviewScreen extends StatefulWidget {
+  const MarketOverviewScreen({super.key});
+
   @override
   State<MarketOverviewScreen> createState() => _MarketOverviewScreenState();
 }
@@ -13,7 +15,7 @@ class _MarketOverviewScreenState extends State<MarketOverviewScreen> {
   Future<void> fetchMarkets() async {
     setState(() => loading = true);
     try {
-      final response = await Dio().get('http://localhost:8000/coins/markets');
+      final response = await Dio().get('https://cryptotracker-yof6.onrender.com/coins/markets');
       coins = response.data;
     } catch (e) {
       coins = [];

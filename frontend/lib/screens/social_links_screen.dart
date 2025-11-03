@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
 class SocialLinksScreen extends StatefulWidget {
+  const SocialLinksScreen({super.key});
+
   @override
   State<SocialLinksScreen> createState() => _SocialLinksScreenState();
 }
@@ -13,7 +15,7 @@ class _SocialLinksScreenState extends State<SocialLinksScreen> {
   Future<void> fetchLinks(String id) async {
     setState(() => loading = true);
     try {
-      final response = await Dio().get('http://localhost:8000/coins/$id');
+      final response = await Dio().get('https://cryptotracker-yof6.onrender.com/coins/$id');
       links = response.data['links'] ?? {};
     } catch (e) {
       links = {};

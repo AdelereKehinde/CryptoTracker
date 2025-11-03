@@ -3,6 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
+
   @override
   State<SignupScreen> createState() => _SignupScreenState();
 }
@@ -20,7 +22,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
     try {
       final response = await Dio().post(
-        'http://127.0.0.1:8000/signup', // 👈 use 10.0.2.2 for Android emulator
+        'https://cryptotracker-yof6.onrender.com/signup',
         data: {
           "username": _usernameController.text.trim(),
           "email": _emailController.text.trim(),

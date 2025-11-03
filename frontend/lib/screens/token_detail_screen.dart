@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
 class TokenDetailScreen extends StatefulWidget {
+  const TokenDetailScreen({super.key});
+
   @override
   State<TokenDetailScreen> createState() => _TokenDetailScreenState();
 }
@@ -13,7 +15,7 @@ class _TokenDetailScreenState extends State<TokenDetailScreen> {
   Future<void> fetchToken(String id) async {
     setState(() => loading = true);
     try {
-      final response = await Dio().get('http://localhost:8000/coins/$id');
+      final response = await Dio().get('https://cryptotracker-yof6.onrender.com/coins/$id');
       token = response.data;
     } catch (e) {
       token = {};

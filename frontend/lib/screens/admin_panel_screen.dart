@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 import 'package:dio/dio.dart';
 class AdminPanelScreen extends StatefulWidget {
+  const AdminPanelScreen({super.key});
+
   @override
   State<AdminPanelScreen> createState() => _AdminPanelScreenState();
 }
@@ -14,7 +16,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   Future<void> fetchUsers() async {
     setState(() => loading = true);
     try {
-      final response = await Dio().get('http://localhost:8000/admin/users');
+      final response = await Dio().get('https://cryptotracker-yof6.onrender.com/admin/users');
       users = response.data ?? [];
     } catch (e) {
       users = [];

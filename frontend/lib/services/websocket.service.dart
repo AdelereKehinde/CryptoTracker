@@ -4,7 +4,7 @@ class WebSocketService {
   WebSocketChannel? channel;
 
   void connect() {
-    channel = WebSocketChannel.connect(Uri.parse('ws://localhost:8000/ws/market'));
+    channel = WebSocketChannel.connect(Uri.parse('ws://https://cryptotracker-yof6.onrender.com/ws/market'));
   }
 
   Stream get stream => channel!.stream;

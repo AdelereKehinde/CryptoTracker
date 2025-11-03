@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 import 'package:dio/dio.dart';
 class CoinExchangesScreen extends StatefulWidget {
+  const CoinExchangesScreen({super.key});
+
   @override
   State<CoinExchangesScreen> createState() => _CoinExchangesScreenState();
 }
@@ -14,7 +16,7 @@ class _CoinExchangesScreenState extends State<CoinExchangesScreen> {
   Future<void> fetchExchanges(String id) async {
     setState(() => loading = true);
     try {
-      final response = await Dio().get('http://localhost:8000/coins/$id/tickers');
+      final response = await Dio().get('https://cryptotracker-yof6.onrender.com/coins/$id/tickers');
       exchanges = response.data['tickers'] ?? [];
     } catch (e) {
       exchanges = [];

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
 class CustomRangeChartScreen extends StatefulWidget {
+  const CustomRangeChartScreen({super.key});
+
   @override
   State<CustomRangeChartScreen> createState() => _CustomRangeChartScreenState();
 }
@@ -17,7 +19,7 @@ class _CustomRangeChartScreenState extends State<CustomRangeChartScreen> {
     setState(() => loading = true);
     try {
       final response = await Dio().get(
-        'http://localhost:8000/coins/$id/market_chart/range',
+        'https://cryptotracker-yof6.onrender.com/$id/market_chart/range',
         queryParameters: {
           'vs_currency': 'usd',
           'from_': from,

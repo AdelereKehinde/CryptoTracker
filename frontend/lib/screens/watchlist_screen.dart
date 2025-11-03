@@ -4,12 +4,14 @@ import 'package:dio/dio.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class WatchlistScreen extends StatefulWidget {
+  const WatchlistScreen({super.key});
+
   @override
   State<WatchlistScreen> createState() => _WatchlistScreenState();
 }
 
 class _WatchlistScreenState extends State<WatchlistScreen> {
-  final Dio _dio = Dio(BaseOptions(baseUrl: 'http://localhost:8000'));
+  final Dio _dio = Dio(BaseOptions(baseUrl: 'https://cryptotracker-yof6.onrender.com/'));
   List<dynamic> watchlist = [];
   bool loading = true;
   String? errorMessage;

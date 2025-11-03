@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 import 'package:dio/dio.dart';
 class PriceChartScreen extends StatefulWidget {
+  const PriceChartScreen({super.key});
+
   @override
   State<PriceChartScreen> createState() => _PriceChartScreenState();
 }
@@ -14,7 +16,7 @@ class _PriceChartScreenState extends State<PriceChartScreen> {
   Future<void> fetchChart(String id) async {
     setState(() => loading = true);
     try {
-      final response = await Dio().get('http://localhost:8000/coins/$id/market_chart', queryParameters: {
+      final response = await Dio().get('https://cryptotracker-yof6.onrender.com/$id/market_chart', queryParameters: {
         'vs_currency': 'usd',
         'days': '30',
       });

@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
 class NotificationsScreen extends StatefulWidget {
+  const NotificationsScreen({super.key});
+
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  final Dio _dio = Dio(BaseOptions(baseUrl: 'http://localhost:8000'));
+  final Dio _dio = Dio(BaseOptions(baseUrl: 'https://cryptotracker-yof6.onrender.com/'));
   List<dynamic> notifications = [];
   bool loading = true;
   String? error;

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 class AdminLoginScreen extends StatefulWidget {
+  const AdminLoginScreen({super.key});
+
   @override
   State<AdminLoginScreen> createState() => _AdminLoginScreenState();
 }
@@ -19,7 +21,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     setState(() => _loading = true);
     try {
       final response = await Dio().post(
-        'http://localhost:8000/admin/login',
+        'https://cryptotracker-yof6.onrender.com/admin/login',
         data: {
           'username': _usernameController.text,
           'password': _passwordController.text,

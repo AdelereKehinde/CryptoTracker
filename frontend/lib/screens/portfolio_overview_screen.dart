@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
 class PortfolioOverviewScreen extends StatefulWidget {
+  const PortfolioOverviewScreen({super.key});
+
   @override
   State<PortfolioOverviewScreen> createState() => _PortfolioOverviewScreenState();
 }
@@ -13,7 +15,7 @@ class _PortfolioOverviewScreenState extends State<PortfolioOverviewScreen> {
   Future<void> fetchPortfolio() async {
     setState(() => loading = true);
     try {
-      final response = await Dio().get('http://localhost:8000/portfolio');
+      final response = await Dio().get('https://cryptotracker-yof6.onrender.com/portfolio');
       holdings = response.data['portfolio'];
     } catch (e) {
       holdings = [];

@@ -4,12 +4,14 @@ import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 
 class AnalyticsDashboardScreen extends StatefulWidget {
+  const AnalyticsDashboardScreen({super.key});
+
   @override
   State<AnalyticsDashboardScreen> createState() => _AnalyticsDashboardScreenState();
 }
 
 class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
-  final Dio _dio = Dio(BaseOptions(baseUrl: 'http://localhost:8000'));
+  final Dio _dio = Dio(BaseOptions(baseUrl: 'https://cryptotracker-yof6.onrender.com/'));
   Map<String, dynamic> analytics = {};
   bool loading = true;
   String? error;

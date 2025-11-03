@@ -7,6 +7,8 @@ import 'package:intl/intl.dart';
 void main() => runApp(CryptoFusionApp());
 
 class CryptoFusionApp extends StatelessWidget {
+  const CryptoFusionApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -146,7 +148,7 @@ class CoinChartPage extends StatefulWidget {
   final String coinName;
   final String image;
   const CoinChartPage(
-      {required this.coinId, required this.coinName, required this.image});
+      {super.key, required this.coinId, required this.coinName, required this.image});
 
   @override
   State<CoinChartPage> createState() => _CoinChartPageState();

@@ -6,13 +6,15 @@ import 'news_feed_screen.dart';
 import 'watchlist_screen.dart';
 
 class MainDashboardScreen extends StatefulWidget {
+  const MainDashboardScreen({super.key});
+
   @override
   State<MainDashboardScreen> createState() => _MainDashboardScreenState();
 }
 
 class _MainDashboardScreenState extends State<MainDashboardScreen> 
     with SingleTickerProviderStateMixin {
-  final Dio _dio = Dio(BaseOptions(baseUrl: 'http://localhost:8000'));
+  final Dio _dio = Dio(BaseOptions(baseUrl: 'https://cryptotracker-yof6.onrender.com/'));
   List topCoins = [];
   bool loadingCoins = true;
   int _selectedIndex = 0;

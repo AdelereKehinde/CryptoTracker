@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
 class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
+
   /// Optionally pass the username as route argument:
   /// Navigator.pushNamed(context, '/profile', arguments: 'alice');
   @override
@@ -13,7 +15,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic> profile = {};
   List users = [];
   bool loading = true;
-  final Dio _dio = Dio(BaseOptions(baseUrl: 'http://localhost:8000'));
+  final Dio _dio = Dio(BaseOptions(baseUrl: 'https://cryptotracker-yof6.onrender.com/'));
 
   Future<void> fetchProfile({String? username}) async {
     setState(() => loading = true);

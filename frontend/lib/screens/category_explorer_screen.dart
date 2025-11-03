@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 import 'package:dio/dio.dart';
 class CategoryExplorerScreen extends StatefulWidget {
+  const CategoryExplorerScreen({super.key});
+
   @override
   State<CategoryExplorerScreen> createState() => _CategoryExplorerScreenState();
 }
@@ -14,7 +16,7 @@ class _CategoryExplorerScreenState extends State<CategoryExplorerScreen> {
   Future<void> fetchCategories() async {
     setState(() => loading = true);
     try {
-      final response = await Dio().get('http://localhost:8000/coins/categories/list');
+      final response = await Dio().get('https://cryptotracker-yof6.onrender.com/coins/categories/list');
       categories = response.data ?? [];
     } catch (e) {
       categories = [];
