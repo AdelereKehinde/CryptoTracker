@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart'; // ADD THIS
+import 'package:shimmer/shimmer.dart'; // ADD TO pubspec.yaml
 
 class NewsFeedScreen extends StatefulWidget {
   const NewsFeedScreen({super.key});
@@ -19,8 +21,9 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
   int _currentPage = 1;
   bool _hasMore = true;
 
-  // Free crypto news API (no signup required)
-  final String apiUrl = "https://newsdata.io/api/1/news?apikey=pub_420389e36e5f8d1f773e3b4a5d4b79bfc5a5f&category=business&language=en&q=crypto";
+  // LIVE CRYPTO NEWS API (FREE & RELIABLE)
+  String get apiUrl => 
+      "https://newsdata.io/api/1/news?apikey=pub_420389e36e5f8d1f773e3b4a5d4b79bfc5a5f&q=crypto&page=$_currentPage";
 
   @override
   void initState() {
@@ -36,11 +39,9 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
   }
 
   void _scrollListener() {
-    if (_scrollController.offset >= _scrollController.position.maxScrollExtent - 100 &&
+    if (_scrollController.offset >= _scrollController.position.maxScrollExtent - 200 &&
         !_scrollController.position.outOfRange) {
-      if (_hasMore && !loading) {
-        loadMoreNews();
-      }
+      if (_hasMore && !loading) loadMoreNews();
     }
   }
 
@@ -49,13 +50,15 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
       loading = true;
       error = false;
     });
-    
+
     try {
       final response = await _dio.get(apiUrl);
-      
-      if (response.statusCode == 200 && response.data['results'] != null) {
+      final data = response.data;
+
+      if (response.statusCode == 200 && data['results'] != null) {
         setState(() {
-          news = response.data['results'];
+          news = data['results'];
+          _hasMore = data['nextPage'] != null;
           loading = false;
         });
       } else {
@@ -68,17 +71,26 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
 
   Future<void> loadMoreNews() async {
     if (!_hasMore || loading) return;
-    
     setState(() => loading = true);
-    
-    await Future.delayed(Duration(seconds: 1));
-    
-    setState(() {
-      news.addAll(_generateMoreDummyData());
-      loading = false;
+
+    try {
       _currentPage++;
-      if (_currentPage >= 3) _hasMore = false;
-    });
+      final response = await _dio.get(apiUrl);
+      final data = response.data;
+
+      if (response.statusCode == 200 && data['results'] != null) {
+        setState(() {
+          news.addAll(data['results']);
+          _hasMore = data['nextPage'] != null;
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to load more news"), backgroundColor: Colors.red),
+      );
+    } finally {
+      setState(() => loading = false);
+    }
   }
 
   void _useDummyData() {
@@ -89,206 +101,143 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
     });
   }
 
-  List<dynamic> _generateDummyNews() {
-    return [
-      {
-        'title': 'Bitcoin Surges Past \$65,000 as Institutional Adoption Grows',
-        'description': 'Major financial institutions continue to add Bitcoin to their balance sheets, driving the price to new monthly highs. Market analysts predict continued growth throughout the quarter.',
-        'image_url': 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=400',
-        'pubDate': '2024-01-15 10:30:00',
-        'source_id': 'crypto-daily',
-        'link': 'https://www.cointelegraph.com'
-      },
-      {
-        'title': 'Ethereum 2.0 Upgrade Reduces Energy Consumption by 99%',
-        'description': 'The successful merge transitions Ethereum to proof-of-stake, making it more environmentally friendly and scalable for future applications.',
-        'image_url': 'https://images.unsplash.com/photo-1621761191319-c6fb62004040?w=400',
-        'pubDate': '2024-01-15 09:15:00',
-        'source_id': 'blockchain-news',
-        'link': 'https://www.coindesk.com'
-      },
-      {
-        'title': 'Regulatory Clarity Emerges for Cryptocurrencies Globally',
-        'description': 'New framework provides much-needed guidelines for crypto businesses and investors, boosting market confidence and institutional participation.',
-        'image_url': 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400',
-        'pubDate': '2024-01-14 16:45:00',
-        'source_id': 'financial-times',
-        'link': 'https://www.decrypt.co'
-      },
-      {
-        'title': 'DeFi Protocol Reaches \$100 Billion in Total Value Locked',
-        'description': 'Decentralized finance continues to grow despite market conditions, showing strong fundamentals and user adoption across multiple chains.',
-        'image_url': 'https://images.unsplash.com/photo-1639762681057-40897d5e7c24?w=400',
-        'pubDate': '2024-01-14 14:20:00',
-        'source_id': 'defi-pulse',
-        'link': 'https://www.cryptoslate.com'
-      },
-      {
-        'title': 'NFT Market Sees Resurgence with Gaming Partnerships',
-        'description': 'Major gaming companies announce NFT integrations, driving renewed interest in digital collectibles and metaverse applications.',
-        'image_url': 'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=400',
-        'pubDate': '2024-01-14 11:30:00',
-        'source_id': 'nft-news',
-        'link': 'https://www.cryptoslate.com'
-      }
-    ];
-  }
+  // OPEN URL IN BROWSER AFTER TOAST
+  Future<void> _openInBrowser(String url) async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            CircularProgressIndicator(color: Colors.white),
+            SizedBox(width: 16),
+            Text("Opening article in browser..."),
+          ],
+        ),
+        backgroundColor: Colors.blue[800],
+        duration: Duration(seconds: 2),
+      ),
+    );
 
-  List<dynamic> _generateMoreDummyData() {
-    return [
-      {
-        'title': 'Central Bank Digital Currencies Gain Global Traction',
-        'description': 'Over 80% of central banks now exploring digital currency implementations for modern financial systems.',
-        'image_url': 'https://images.unsplash.com/photo-1550572017-069d6b1a2b3d?w=400',
-        'pubDate': '2024-01-13 13:15:00',
-        'source_id': 'cbdc-insider',
-        'link': 'https://www.cryptoslate.com'
-      },
-      {
-        'title': 'Web3 Startups Raise \$7.3 Billion in Q4 Funding',
-        'description': 'Venture capital continues to flow into blockchain and Web3 infrastructure projects despite market volatility.',
-        'image_url': 'https://images.unsplash.com/photo-1665686377066-08b6fad8dbff?w=400',
-        'pubDate': '2024-01-13 10:45:00',
-        'source_id': 'vc-daily',
-        'link': 'https://www.coindesk.com'
-      }
-    ];
-  }
+    await Future.delayed(Duration(seconds: 1)); // Let toast show
 
-  void _refreshNews() {
-    setState(() {
-      _currentPage = 1;
-      _hasMore = true;
-      news.clear();
-    });
-    fetchNews();
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Could not open browser"), backgroundColor: Colors.red),
+      );
+    }
   }
 
   void _openArticle(int index) {
     final article = news[index];
+    final link = article['link'] ?? article['url'] ?? 'https://cryptonews.com';
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.85,
+        height: MediaQuery.of(context).size.height * 0.9,
         decoration: BoxDecoration(
           color: Color(0xFF0A0E2A),
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           children: [
+            // Drag handle
             Container(
-              margin: EdgeInsets.all(16),
-              width: 40,
-              height: 4,
+              margin: EdgeInsets.only(top: 12),
+              width: 50,
+              height: 5,
               decoration: BoxDecoration(
                 color: Colors.white30,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(3),
               ),
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: EdgeInsets.all(16),
+                padding: EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Image
                     if (article['image_url'] != null)
-                      Container(
-                        height: 200,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          image: DecorationImage(
-                            image: CachedNetworkImageProvider(article['image_url']),
-                            fit: BoxFit.cover,
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: CachedNetworkImage(
+                          imageUrl: article['image_url'],
+                          height: 220,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Shimmer.fromColors(
+                            baseColor: Colors.grey[800]!,
+                            highlightColor: Colors.grey[700]!,
+                            child: Container(color: Colors.grey),
                           ),
                         ),
                       ),
-                    SizedBox(height: 16),
+                    SizedBox(height: 20),
+
+                    // Title
                     Text(
-                      article['title'] ?? 'No title',
+                      article['title'] ?? 'No Title',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
+                        height: 1.3,
                       ),
                     ),
-                    SizedBox(height: 16),
-                    Text(
-                      article['description'] ?? 'No description available',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 16,
-                        height: 1.5,
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    Container(
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.blue[800]!.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              article['source_id']?.toString().toUpperCase() ?? 'UNKNOWN',
-                              style: TextStyle(
-                                color: Colors.blue[200],
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                    SizedBox(height: 12),
+
+                    // Meta
+                    Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.blue[700]!.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              _formatDate(article['pubDate'] ?? ''),
-                              style: TextStyle(
-                                color: Colors.white54,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue[800],
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                          child: Text(
+                            (article['source_id'] ?? 'Crypto').toString().toUpperCase(),
+                            style: TextStyle(color: Colors.blue[200], fontSize: 11, fontWeight: FontWeight.bold),
                           ),
                         ),
+                        SizedBox(width: 12),
+                        Text(
+                          _formatDate(article['pubDate'] ?? ''),
+                          style: TextStyle(color: Colors.white54, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20),
+
+                    // Description
+                    Text(
+                      article['description'] ?? 'No description available.',
+                      style: TextStyle(color: Colors.white70, fontSize: 16, height: 1.6),
+                    ),
+                    SizedBox(height: 30),
+
+                    // READ FULL BUTTON
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
                         onPressed: () {
                           Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Opening full article in browser...'),
-                              backgroundColor: Colors.blue[800],
-                            ),
-                          );
+                          _openInBrowser(link);
                         },
-                        child: Text(
-                          'READ FULL ARTICLE',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        icon: Icon(Icons.open_in_browser, color: Colors.white),
+                        label: Text(
+                          "READ FULL ARTICLE",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green[600],
+                          padding: EdgeInsets.symmetric(vertical: 18),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          elevation: 8,
                         ),
                       ),
                     ),
@@ -305,10 +254,23 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
   String _formatDate(String dateString) {
     try {
       final date = DateTime.parse(dateString);
-      return DateFormat('MMM dd, yyyy • HH:mm').format(date);
+      final now = DateTime.now();
+      final diff = now.difference(date);
+      if (diff.inDays > 0) return '${diff.inDays}d ago';
+      if (diff.inHours > 0) return '${diff.inHours}h ago';
+      return '${diff.inMinutes}m ago';
     } catch (e) {
-      return 'Recent';
+      return 'Just now';
     }
+  }
+
+  void _refreshNews() {
+    setState(() {
+      _currentPage = 1;
+      _hasMore = true;
+      news.clear();
+    });
+    fetchNews();
   }
 
   @override
@@ -320,19 +282,25 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
           children: [
             // Header
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF1E3C72), Color(0xFF2A5298)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
               child: Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.arrow_back, color: Colors.white),
+                    icon: Icon(Icons.arrow_back_ios, color: Colors.white),
                     onPressed: () => Navigator.pop(context),
                   ),
-                  SizedBox(width: 8),
                   Text(
                     'Crypto News',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 20,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -345,83 +313,57 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
               ),
             ),
 
-            // Error Banner
+            // Offline Banner
             if (error)
               Container(
-                width: double.infinity,
+                margin: EdgeInsets.all(16),
                 padding: EdgeInsets.all(12),
-                margin: EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Colors.orange[800]!.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.orange[900]!.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.orange),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.wifi_off, color: Colors.orange[200], size: 16),
-                    SizedBox(width: 8),
+                    Icon(Icons.signal_wifi_off, color: Colors.orange[300]),
+                    SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Using demo data - Connect to internet for live news',
-                        style: TextStyle(color: Colors.orange[200], fontSize: 12),
+                        "Offline Mode - Showing cached news",
+                        style: TextStyle(color: Colors.orange[200], fontWeight: FontWeight.w500),
                       ),
                     ),
                   ],
                 ),
               ),
 
-            SizedBox(height: 16),
-
-            // News List
+            // News Feed
             Expanded(
               child: loading && news.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircularProgressIndicator(color: Colors.blue[200]),
-                          SizedBox(height: 16),
-                          Text(
-                            'Loading latest crypto news...',
-                            style: TextStyle(color: Colors.white70),
-                          ),
-                        ],
-                      ),
-                    )
+                  ? _buildShimmerList()
                   : RefreshIndicator(
-                      backgroundColor: Colors.blue[800],
-                      color: Colors.white,
                       onRefresh: fetchNews,
+                      color: Colors.white,
+                      backgroundColor: Colors.blue[800],
                       child: ListView.builder(
                         controller: _scrollController,
                         physics: AlwaysScrollableScrollPhysics(),
-                        itemCount: news.length + 1,
+                        itemCount: news.length + (loading ? 1 : 0),
                         itemBuilder: (context, index) {
                           if (index == news.length) {
-                            return _hasMore
-                                ? Padding(
-                                    padding: EdgeInsets.all(16),
-                                    child: Center(
-                                      child: CircularProgressIndicator(color: Colors.blue[200]),
-                                    ),
-                                  )
-                                : Padding(
-                                    padding: EdgeInsets.all(16),
-                                    child: Center(
-                                      child: Text(
-                                        'No more articles to load',
-                                        style: TextStyle(color: Colors.white54),
-                                      ),
-                                    ),
-                                  );
+                            return Padding(
+                              padding: EdgeInsets.all(20),
+                              child: Center(
+                                child: CircularProgressIndicator(color: Colors.blue[300]),
+                              ),
+                            );
                           }
-
                           final item = news[index];
                           return _NewsCard(
                             title: item['title'] ?? 'No title',
-                            description: item['description'] ?? 'No description available',
+                            description: item['description'] ?? 'Tap to read more',
                             imageUrl: item['image_url'],
-                            source: item['source_id'] ?? 'Unknown Source',
+                            source: item['source_id'] ?? 'Crypto',
                             date: _formatDate(item['pubDate'] ?? ''),
                             onTap: () => _openArticle(index),
                           );
@@ -434,115 +376,127 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
       ),
     );
   }
+
+  Widget _buildShimmerList() {
+    return ListView.builder(
+      itemCount: 6,
+      itemBuilder: (context, index) => Shimmer.fromColors(
+        baseColor: Colors.grey[800]!,
+        highlightColor: Colors.grey[700]!,
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          height: 120,
+          decoration: BoxDecoration(
+            color: Colors.grey,
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
+// REUSABLE NEWS CARD
 class _NewsCard extends StatelessWidget {
-  final String title;
-  final String description;
+  final String title, description, source, date;
   final String? imageUrl;
-  final String source;
-  final String date;
   final VoidCallback onTap;
 
   const _NewsCard({
     required this.title,
     required this.description,
-    this.imageUrl,
     required this.source,
     required this.date,
+    this.imageUrl,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           child: Container(
             padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                colors: [Colors.white.withOpacity(0.08), Colors.white.withOpacity(0.03)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.white.withOpacity(0.1)),
+              boxShadow: [
+                BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 5)),
+              ],
             ),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // News Image
+                // Image
                 if (imageUrl != null)
-                  Container(
-                    width: 80,
-                    height: 80,
-                    margin: EdgeInsets.only(right: 12),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      image: DecorationImage(
-                        image: NetworkImage(imageUrl!),
-                        fit: BoxFit.cover,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: CachedNetworkImage(
+                      imageUrl: imageUrl!,
+                      width: 90,
+                      height: 90,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Shimmer.fromColors(
+                        baseColor: Colors.grey[800]!,
+                        highlightColor: Colors.grey[700]!,
+                        child: Container(color: Colors.grey),
                       ),
                     ),
                   ),
-                
-                // News Content
+                SizedBox(width: 16),
+
+                // Content
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         title,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: 6),
                       Text(
                         description,
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.white70, fontSize: 14),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: 8),
+                      SizedBox(height: 10),
                       Row(
                         children: [
                           Container(
-                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: Colors.blue[800]!.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(6),
+                              color: Colors.green[700]!.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               source.toUpperCase(),
-                              style: TextStyle(
-                                color: Colors.blue[200],
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: TextStyle(color: Colors.green[200], fontSize: 10, fontWeight: FontWeight.bold),
                             ),
                           ),
-                          SizedBox(width: 8),
+                          SizedBox(width: 10),
                           Text(
                             date,
-                            style: TextStyle(
-                              color: Colors.white54,
-                              fontSize: 12,
-                            ),
+                            style: TextStyle(color: Colors.white54, fontSize: 12),
                           ),
                         ],
                       ),
                     ],
                   ),
                 ),
+                Icon(Icons.arrow_forward_ios, color: Colors.white30, size: 18),
               ],
             ),
           ),

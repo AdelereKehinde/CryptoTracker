@@ -1,52 +1,67 @@
+// login_screen.dart (CORRECTED)
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
-
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  _LoginScreenState createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _storage = FlutterSecureStorage();
   bool _loading = false;
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
+
     setState(() => _loading = true);
 
     try {
       final response = await Dio().post(
-        'https://cryptotracker-yof6.onrender.com/token', 
+        'http://your-backend.com/token', // Replace with your URL
         data: {
-          'username': _usernameController.text,
-          'password': _passwordController.text,
+          "username": _usernameController.text.trim(),
+          "password": _passwordController.text.trim(),
         },
+        options: Options(
+          headers: {"Content-Type": "application/json"},
+          responseType: ResponseType.json,
+        ),
       );
-      if (response.statusCode == 200 && response.data['access_token'] != null) {
+
+      if (response.statusCode == 200) {
+        // Store token securely
+        final token = response.data['access_token'];
+        await _storage.write(key: "auth_token", value: token);
+        
         Fluttertoast.showToast(
-          msg: "Login successful!",
-          backgroundColor: Colors.blueAccent,
+          msg: "Login successful! Welcome back!",
+          backgroundColor: Colors.green,
           textColor: Colors.white,
+          toastLength: Toast.LENGTH_LONG,
         );
-        // TODO: Save token securely and navigate to dashboard
-        Navigator.pushReplacementNamed(context, '/main_dashboard');
+        
+        // Navigate to home/dashboard
+        Navigator.pushReplacementNamed(context, '/home');
       } else {
         Fluttertoast.showToast(
-          msg: "Invalid credentials.",
-          backgroundColor: Colors.redAccent,
+          msg: "Login failed. Please check your credentials.",
+          backgroundColor: Colors.red,
           textColor: Colors.white,
+          toastLength: Toast.LENGTH_LONG,
         );
       }
     } catch (e) {
       Fluttertoast.showToast(
-        msg: "Login failed. Please try again.",
-        backgroundColor: Colors.redAccent,
+        msg: "Wrong username or password",
+        backgroundColor: Colors.red,
         textColor: Colors.white,
+        toastLength: Toast.LENGTH_LONG,
       );
     } finally {
       setState(() => _loading = false);
@@ -56,8 +71,12 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text('Login'),
+        backgroundColor: Colors.blue[900],
+      ),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
             begin: Alignment.topLeft,
@@ -80,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       CircleAvatar(
                         radius: 36,
                         backgroundColor: Colors.blue[100],
-                        child: Icon(Icons.currency_bitcoin, size: 48, color: Colors.orange[700]),
+                        child: Icon(Icons.lock_open, size: 48, color: Colors.orange[700]),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -113,34 +132,31 @@ class _LoginScreenState extends State<LoginScreen> {
                         validator: (v) => v == null || v.isEmpty ? "Enter password" : null,
                       ),
                       const SizedBox(height: 24),
-                      AnimatedSwitcher(
-                        duration: Duration(milliseconds: 300),
-                        child: _loading
-                            ? CircularProgressIndicator(color: Colors.blue)
-                            : SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton.icon(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blue[800],
-                                    padding: EdgeInsets.symmetric(vertical: 14),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
+                      _loading
+                          ? CircularProgressIndicator(color: Colors.blue)
+                          : SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue[800],
+                                  padding: EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                  icon: Icon(Icons.login, color: Colors.white),
-                                  label: Text(
-                                    "Login",
-                                    style: TextStyle(fontSize: 18, color: Colors.white),
-                                  ),
-                                  onPressed: _login,
                                 ),
+                                icon: Icon(Icons.login, color: Colors.white),
+                                label: Text(
+                                  "Login",
+                                  style: TextStyle(fontSize: 18, color: Colors.white),
+                                ),
+                                onPressed: _login,
                               ),
-                      ),
+                            ),
                       const SizedBox(height: 12),
                       TextButton(
                         onPressed: () => Navigator.pushNamed(context, '/signup'),
                         child: Text(
-                          "Don't have an account? Sign up",
+                          "Don't have an account? Sign Up",
                           style: TextStyle(color: Colors.blue[700]),
                         ),
                       ),
@@ -153,5 +169,12 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }
