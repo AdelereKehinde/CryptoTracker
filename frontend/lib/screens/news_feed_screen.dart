@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart'; // ADD THIS
-import 'package:shimmer/shimmer.dart'; // ADD TO pubspec.yaml
+import 'package:url_launcher/url_launcher.dart';
+import 'package:shimmer/shimmer.dart';
 
 class NewsFeedScreen extends StatefulWidget {
   const NewsFeedScreen({super.key});
@@ -21,8 +21,8 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
   int _currentPage = 1;
   bool _hasMore = true;
 
-  // LIVE CRYPTO NEWS API (FREE & RELIABLE)
-  String get apiUrl => 
+  // LIVE CRYPTO NEWS API
+  String get apiUrl =>
       "https://newsdata.io/api/1/news?apikey=pub_420389e36e5f8d1f773e3b4a5d4b79bfc5a5f&q=crypto&page=$_currentPage";
 
   @override
@@ -86,7 +86,7 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to load more news"), backgroundColor: Colors.red),
+        SnackBar(content: Text("No more news"), backgroundColor: Colors.orange),
       );
     } finally {
       setState(() => loading = false);
@@ -101,7 +101,50 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
     });
   }
 
-  // OPEN URL IN BROWSER AFTER TOAST
+  // DUMMY DATA FUNCTIONS (FIXED!)
+  List<dynamic> _generateDummyNews() {
+    return [
+      {
+        'title': 'Bitcoin Surges to \$120,000 as Trump Wins Election',
+        'description': 'Crypto market explodes after pro-Bitcoin candidate victory. ETFs see record inflows.',
+        'image_url': 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=400',
+        'pubDate': '2025-11-03 10:30:00',
+        'source_id': 'coindesk',
+        'link': 'https://coindesk.com'
+      },
+      {
+        'title': 'Ethereum Hits All-Time High After ETF Approval',
+        'description': 'ETH breaks \$8,000 as institutional money floods in. Staking yields soar.',
+        'image_url': 'https://images.unsplash.com/photo-1621761191319-c6fb62004040?w=400',
+        'pubDate': '2025-11-03 09:15:00',
+        'source_id': 'theblock',
+        'link': 'https://theblock.co'
+      },
+      {
+        'title': 'Solana Mobile 2 Sells Out in 2 Hours',
+        'description': 'Web3 phone with hardware wallet sells 100K units instantly.',
+        'image_url': 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400',
+        'pubDate': '2025-11-02 16:45:00',
+        'source_id': 'decrypt',
+        'link': 'https://decrypt.co'
+      },
+    ];
+  }
+
+  List<dynamic> _generateMoreDummyData() {
+    return [
+      {
+        'title': 'BlackRock Launches Crypto Fund',
+        'description': '\$10B fund opens doors for pension funds to buy Bitcoin.',
+        'image_url': 'https://images.unsplash.com/photo-1639762681057-40897d5e7c24?w=400',
+        'pubDate': '2025-11-01 14:20:00',
+        'source_id': 'bloomberg',
+        'link': 'https://bloomberg.com'
+      },
+    ];
+  }
+
+  // OPEN IN BROWSER WITH TOAST
   Future<void> _openInBrowser(String url) async {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -109,21 +152,20 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
           children: [
             CircularProgressIndicator(color: Colors.white),
             SizedBox(width: 16),
-            Text("Opening article in browser..."),
+            Text("Opening in browser..."),
           ],
         ),
         backgroundColor: Colors.blue[800],
-        duration: Duration(seconds: 2),
       ),
     );
 
-    await Future.delayed(Duration(seconds: 1)); // Let toast show
+    await Future.delayed(Duration(seconds: 1));
 
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Could not open browser"), backgroundColor: Colors.red),
+        SnackBar(content: Text("Can't open link"), backgroundColor: Colors.red),
       );
     }
   }
@@ -144,23 +186,13 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
         ),
         child: Column(
           children: [
-            // Drag handle
-            Container(
-              margin: EdgeInsets.only(top: 12),
-              width: 50,
-              height: 5,
-              decoration: BoxDecoration(
-                color: Colors.white30,
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
+            Container(margin: EdgeInsets.only(top: 12), width: 50, height: 5, color: Colors.white30),
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Image
                     if (article['image_url'] != null)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(16),
@@ -169,7 +201,7 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
                           height: 220,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          placeholder: (context, url) => Shimmer.fromColors(
+                          placeholder: (_, __) => Shimmer.fromColors(
                             baseColor: Colors.grey[800]!,
                             highlightColor: Colors.grey[700]!,
                             child: Container(color: Colors.grey),
@@ -177,68 +209,37 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
                         ),
                       ),
                     SizedBox(height: 20),
-
-                    // Title
-                    Text(
-                      article['title'] ?? 'No Title',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        height: 1.3,
-                      ),
-                    ),
+                    Text(article['title'] ?? 'No Title',
+                        style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
                     SizedBox(height: 12),
-
-                    // Meta
                     Row(
                       children: [
                         Container(
                           padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.blue[700]!.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            (article['source_id'] ?? 'Crypto').toString().toUpperCase(),
-                            style: TextStyle(color: Colors.blue[200], fontSize: 11, fontWeight: FontWeight.bold),
-                          ),
+                          decoration: BoxDecoration(color: Colors.blue[700]!.withOpacity(0.3), borderRadius: BorderRadius.circular(8)),
+                          child: Text((article['source_id'] ?? 'Crypto').toString().toUpperCase(),
+                              style: TextStyle(color: Colors.blue[200], fontSize: 11, fontWeight: FontWeight.bold)),
                         ),
                         SizedBox(width: 12),
-                        Text(
-                          _formatDate(article['pubDate'] ?? ''),
-                          style: TextStyle(color: Colors.white54, fontSize: 13),
-                        ),
+                        Text(_formatDate(article['pubDate'] ?? ''),
+                            style: TextStyle(color: Colors.white54, fontSize: 13)),
                       ],
                     ),
                     SizedBox(height: 20),
-
-                    // Description
-                    Text(
-                      article['description'] ?? 'No description available.',
-                      style: TextStyle(color: Colors.white70, fontSize: 16, height: 1.6),
-                    ),
+                    Text(article['description'] ?? 'No description.',
+                        style: TextStyle(color: Colors.white70, fontSize: 16, height: 1.6)),
                     SizedBox(height: 30),
-
-                    // READ FULL BUTTON
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _openInBrowser(link);
-                        },
-                        icon: Icon(Icons.open_in_browser, color: Colors.white),
-                        label: Text(
-                          "READ FULL ARTICLE",
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green[600],
-                          padding: EdgeInsets.symmetric(vertical: 18),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          elevation: 8,
-                        ),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _openInBrowser(link);
+                      },
+                      icon: Icon(Icons.open_in_browser),
+                      label: Text("READ FULL ARTICLE", style: TextStyle(fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green[600],
+                        padding: EdgeInsets.symmetric(vertical: 18),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                     ),
                   ],
@@ -284,31 +285,14 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF1E3C72), Color(0xFF2A5298)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                gradient: LinearGradient(colors: [Color(0xFF1E3C72), Color(0xFF2A5298)]),
               ),
               child: Row(
                 children: [
-                  IconButton(
-                    icon: Icon(Icons.arrow_back_ios, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  Text(
-                    'Crypto News',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  IconButton(icon: Icon(Icons.arrow_back_ios, color: Colors.white), onPressed: () => Navigator.pop(context)),
+                  Text('Crypto News', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
                   Spacer(),
-                  IconButton(
-                    icon: Icon(Icons.refresh, color: Colors.white),
-                    onPressed: _refreshNews,
-                  ),
+                  IconButton(icon: Icon(Icons.refresh, color: Colors.white), onPressed: _refreshNews),
                 ],
               ),
             ),
@@ -318,26 +302,11 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
               Container(
                 margin: EdgeInsets.all(16),
                 padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.orange[900]!.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.orange),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.signal_wifi_off, color: Colors.orange[300]),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        "Offline Mode - Showing cached news",
-                        style: TextStyle(color: Colors.orange[200], fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                  ],
-                ),
+                decoration: BoxDecoration(color: Colors.orange[900]!.withOpacity(0.2), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.orange)),
+                child: Row(children: [Icon(Icons.signal_wifi_off, color: Colors.orange[300]), SizedBox(width: 12), Expanded(child: Text("Offline - Showing demo news", style: TextStyle(color: Colors.orange[200])))]),
               ),
 
-            // News Feed
+            // News List
             Expanded(
               child: loading && news.isEmpty
                   ? _buildShimmerList()
@@ -351,17 +320,12 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
                         itemCount: news.length + (loading ? 1 : 0),
                         itemBuilder: (context, index) {
                           if (index == news.length) {
-                            return Padding(
-                              padding: EdgeInsets.all(20),
-                              child: Center(
-                                child: CircularProgressIndicator(color: Colors.blue[300]),
-                              ),
-                            );
+                            return Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator(color: Colors.blue[300])));
                           }
                           final item = news[index];
                           return _NewsCard(
                             title: item['title'] ?? 'No title',
-                            description: item['description'] ?? 'Tap to read more',
+                            description: item['description'] ?? 'Tap to read',
                             imageUrl: item['image_url'],
                             source: item['source_id'] ?? 'Crypto',
                             date: _formatDate(item['pubDate'] ?? ''),
@@ -380,125 +344,77 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
   Widget _buildShimmerList() {
     return ListView.builder(
       itemCount: 6,
-      itemBuilder: (context, index) => Shimmer.fromColors(
+      itemBuilder: (_, __) => Shimmer.fromColors(
         baseColor: Colors.grey[800]!,
         highlightColor: Colors.grey[700]!,
         child: Container(
-          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          margin: EdgeInsets.all(16),
           height: 120,
           decoration: BoxDecoration(
             color: Colors.grey,
             borderRadius: BorderRadius.circular(16),
-          ),
-        ),
+  ),
+),
       ),
     );
   }
 }
 
-// REUSABLE NEWS CARD
+// NEWS CARD
 class _NewsCard extends StatelessWidget {
   final String title, description, source, date;
   final String? imageUrl;
   final VoidCallback onTap;
 
-  const _NewsCard({
-    required this.title,
-    required this.description,
-    required this.source,
-    required this.date,
-    this.imageUrl,
-    required this.onTap,
-  });
+  const _NewsCard({required this.title, required this.description, required this.source, required this.date, this.imageUrl, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.white.withOpacity(0.08), Colors.white.withOpacity(0.03)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
-              boxShadow: [
-                BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 5)),
-              ],
-            ),
-            child: Row(
-              children: [
-                // Image
-                if (imageUrl != null)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: CachedNetworkImage(
-                      imageUrl: imageUrl!,
-                      width: 90,
-                      height: 90,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Shimmer.fromColors(
-                        baseColor: Colors.grey[800]!,
-                        highlightColor: Colors.grey[700]!,
-                        child: Container(color: Colors.grey),
-                      ),
-                    ),
-                  ),
-                SizedBox(width: 16),
-
-                // Content
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: 6),
-                      Text(
-                        description,
-                        style: TextStyle(color: Colors.white70, fontSize: 14),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: Colors.green[700]!.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              source.toUpperCase(),
-                              style: TextStyle(color: Colors.green[200], fontSize: 10, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          SizedBox(width: 10),
-                          Text(
-                            date,
-                            style: TextStyle(color: Colors.white54, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [Colors.white.withOpacity(0.08), Colors.white.withOpacity(0.03)]),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 5))],
+          ),
+          child: Row(
+            children: [
+              if (imageUrl != null)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: CachedNetworkImage(imageUrl: imageUrl!, width: 90, height: 90, fit: BoxFit.cover),
                 ),
-                Icon(Icons.arrow_forward_ios, color: Colors.white30, size: 18),
-              ],
-            ),
+              SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    SizedBox(height: 6),
+                    Text(description, style: TextStyle(color: Colors.white70, fontSize: 14), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(color: Colors.green[700]!.withOpacity(0.3), borderRadius: BorderRadius.circular(8)),
+                          child: Text(source.toUpperCase(), style: TextStyle(color: Colors.green[200], fontSize: 10, fontWeight: FontWeight.bold)),
+                        ),
+                        SizedBox(width: 10),
+                        Text(date, style: TextStyle(color: Colors.white54, fontSize: 12)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios, color: Colors.white30, size: 18),
+            ],
           ),
         ),
       ),
