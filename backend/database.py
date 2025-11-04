@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 
-# Use psycopg (new driver) instead of psycopg2
+# ✅ use psycopg driver instead of psycopg2
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "postgresql+psycopg://postgres:admin@localhost:5432/cheeseball_db"
